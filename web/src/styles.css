@@ -60,34 +60,39 @@ button:disabled { cursor: not-allowed; opacity: .32; }
 .quality-summary strong { overflow: hidden; color: #dfe9e5; font: 500 9px DM Mono, monospace; text-overflow: ellipsis; white-space: nowrap; }
 .quality-summary strong.good { color: #b9ff4a; }
 
-.embedding-lab { min-height: 0; flex: 1 1 auto; padding-top: 17px; display: flex; flex-direction: column; border-top: 1px solid #2b443b; }
-.capture-grid { margin-top: 13px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
-.capture-card { min-width: 0; padding: 10px; border: 1px solid #2b443b; background: #0c1b16; }
-.capture-card.captured { border-top-color: #b9ff4a; }
-.capture-code { display: grid; width: 25px; height: 25px; place-items: center; border: 1px solid #425d53; color: #b9ff4a; font: 500 8px DM Mono, monospace; }
-.capture-card h3 { margin: 9px 0 3px; overflow: hidden; font-size: 10px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
-.capture-card p { margin: 0 0 9px; overflow: hidden; color: #71847d; font-size: 8px; text-overflow: ellipsis; white-space: nowrap; }
-.capture-card button { width: 100%; height: 30px; padding: 0 5px; border: 1px solid #3a554b; background: transparent; color: #dbe7e2; font-size: 9px; }
-.capture-card button:not(:disabled):hover { border-color: #b9ff4a; color: #b9ff4a; }
-.similarity-panel { min-height: 0; flex: 1 1 auto; margin-top: 10px; display: grid; grid-template-columns: 1fr 1fr; border: 1px solid #2b443b; }
-.similarity-panel > div { min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: clamp(5px, 1vh, 12px); padding: clamp(12px, 2vh, 22px); border-right: 1px solid #2b443b; }
-.similarity-panel > div:last-child { border-right: 0; }
-.similarity-panel span { color: #70847c; font: 8px DM Mono, monospace; }
-.similarity-panel strong { color: #e8f1ed; font: 500 clamp(22px, 4vh, 38px) DM Mono, monospace; }
-.embedding-note { min-height: 33px; display: flex; align-items: end; justify-content: space-between; gap: 12px; color: #81958d; font-size: 8px; }
-.embedding-note p { margin: 0; }
-.text-button { padding: 5px 0; background: transparent; color: #9cafa7; border-bottom: 1px solid #52675f; font-size: 8px; }
-.embedding-lab > .error { margin-top: 7px; }
+.enrollment-panel { min-height: 0; flex: 1 1 auto; padding-top: 17px; display: flex; flex-direction: column; border-top: 1px solid #2b443b; }
+.person-form { margin-top: 13px; display: grid; grid-template-columns: .8fr 1.2fr; gap: 7px; }
+.person-form label, .registry-summary label { min-width: 0; display: grid; gap: 5px; }
+.person-form span, .registry-summary span, .representative-card span { color: #71847d; font: 8px DM Mono, monospace; letter-spacing: .07em; text-transform: uppercase; }
+.person-form input, .registry-summary select { min-width: 0; width: 100%; height: 34px; padding: 0 9px; border: 1px solid #304a40; outline: 0; background: #10221c; color: #dfe9e5; font-size: 10px; }
+.sample-progress { margin-top: 10px; display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; }
+.sample-progress > div { display: grid; place-items: center; gap: 3px; height: 48px; border: 1px solid #2b443b; background: #0c1b16; }
+.sample-progress strong { color: #7d9089; font: 500 13px DM Mono, monospace; }
+.sample-progress span { color: #52675f; font: 7px DM Mono, monospace; }
+.sample-progress > div.complete { border-color: #607e4f; box-shadow: inset 0 2px #b9ff4a; }
+.sample-progress > div.complete strong, .sample-progress > div.complete span { color: #b9ff4a; }
+.enrollment-actions { margin-top: 9px; display: grid; grid-template-columns: 1fr 68px; gap: 6px; }
+.enrollment-actions button { height: 34px; padding: 0 10px; font-size: 10px; }
+.capture-sample { background: #b9ff4a; color: #07100e; font-weight: 700; }
+.representative-card { margin-top: 9px; display: grid; grid-template-columns: 1fr 1fr; border: 1px solid #2b443b; }
+.representative-card > div { min-width: 0; display: grid; gap: 4px; padding: 9px; border-right: 1px solid #2b443b; }
+.representative-card > div:last-child { border-right: 0; }
+.representative-card strong { overflow: hidden; color: #dfe9e5; font: 500 9px DM Mono, monospace; text-overflow: ellipsis; white-space: nowrap; }
+.save-person { width: 100%; height: 38px; margin-top: 9px; padding: 0 12px; background: #e8f1ed; color: #07100e; font-size: 10px; font-weight: 700; }
+.save-person:not(:disabled):hover { background: #b9ff4a; }
+.registry-summary { margin-top: 9px; }
+.registry-summary select { height: 32px; font-size: 9px; }
+.enrollment-feedback { min-height: 18px; margin: auto 0 0; padding-top: 8px; color: #93a69e; font-size: 8px; }
+.enrollment-feedback.failed { color: #ff9b8b; }
 
 @media (max-height: 720px) {
   .shell { padding-right: 16px; padding-bottom: 16px; padding-left: 16px; }
   .topbar { height: 54px; }
   .dashboard { height: calc(100dvh - 70px); grid-template-columns: minmax(0, 1fr) 400px; }
   .command-panel { padding: 14px; gap: 12px; }
-  .embedding-lab { padding-top: 12px; }
-  .capture-grid { margin-top: 9px; }
-  .capture-card { padding: 8px; }
-  .capture-card h3 { margin-top: 6px; }
+  .enrollment-panel { padding-top: 12px; }
+  .person-form { margin-top: 9px; }
+  .sample-progress > div { height: 42px; }
   .quality-summary { margin-top: 9px; }
   .quality-summary > div { padding: 7px; }
 }

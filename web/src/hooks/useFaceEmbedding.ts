@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, type RefObject } from 'react';
 import type { FaceBox } from '../services/face-detector';
-import { cosineSimilarity, faceEmbedder } from '../services/face-embedder';
+import { faceEmbedder } from '../services/face-embedder';
+import { cosineSimilarity } from '../services/embedding-math';
 
 export type CaptureSlot = 'A1' | 'A2' | 'B1';
 type ModelStatus = 'loading' | 'ready' | 'error';
