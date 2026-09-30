@@ -13,6 +13,7 @@ export type DetectionMetrics = {
   inferenceMs: number;
   detectionFps: number;
   quality: FaceQualityResult | null;
+  primaryFace: FaceBox | null;
   error: string;
 };
 
@@ -22,6 +23,7 @@ const INITIAL_METRICS: DetectionMetrics = {
   inferenceMs: 0,
   detectionFps: 0,
   quality: null,
+  primaryFace: null,
   error: '',
 };
 
@@ -128,6 +130,7 @@ export function useFaceDetection(videoRef: RefObject<HTMLVideoElement | null>, i
           inferenceMs: result.inferenceMs,
           detectionFps: displayedFps,
           quality: primaryFace?.quality ?? null,
+          primaryFace: primaryFace?.face ?? null,
           error: '',
         });
       } catch (reason) {

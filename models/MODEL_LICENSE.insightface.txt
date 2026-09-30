@@ -1,0 +1,12 @@
+InsightFace pretrained model notice
+
+Model: w600k_mbf.onnx from the official buffalo_sc model pack.
+Source: https://github.com/deepinsight/insightface/releases/tag/model-zoo
+
+The InsightFace source code is MIT licensed. The pretrained models published in
+the InsightFace model zoo are provided for non-commercial research purposes
+only. Commercial use requires a separate license from InsightFace.
+
+This file records the restriction for this local technical PoC. Replace the
+model with an appropriately licensed compatible model before production or
+commercial deployment.

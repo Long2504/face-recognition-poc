@@ -17,3 +17,13 @@ Vite dùng thư mục này làm static `publicDir`; inference vẫn chạy hoàn
 `ort-wasm-simd-threaded.wasm` được phục vụ trực tiếp từ root URL. Đường dẫn explicit
 này tránh trường hợp Vite dev server trả `index.html` cho URL WASM được suy luận sai.
 File được lấy từ package `onnxruntime-web` đang khóa trong `package-lock.json`.
+
+## Phase 4 face embedding
+
+- File: `w600k_mbf.onnx`
+- Model pack: InsightFace `buffalo_sc`, MobileFaceNet@WebFace600K
+- Input: RGB `1 × 3 × 112 × 112`, normalized bằng `(pixel - 127.5) / 127.5`
+- Output: `1 × 512`, sau đó được L2-normalize trong browser
+- SHA-256: `9CC6E4A75F0E2BF0B1AED94578F144D15175F357BDC05E815E5C4A02B319EB4F`
+- Source: https://github.com/deepinsight/insightface/releases/tag/model-zoo
+- Terms: pretrained model chỉ dành cho nghiên cứu phi thương mại; xem `MODEL_LICENSE.insightface.txt`

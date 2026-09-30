@@ -1,6 +1,6 @@
 # Face Recognition PoC
 
-PoC độc lập để kiểm chứng face recognition theo từng phase. Hiện tại project đã triển khai **Phase 0 (bootstrap)**, **Phase 1 (webcam)**, **Phase 2 (face detection)** và **Phase 3 (face quality)**; chưa có embedding, recognition hoặc lưu ảnh.
+PoC độc lập để kiểm chứng face recognition theo từng phase. Hiện tại project đã triển khai từ **Phase 0** đến **Phase 4 (face embedding)**; chưa có enrollment, recognition hoặc lưu ảnh.
 
 ## Kiến trúc hiện tại
 
@@ -9,6 +9,7 @@ Browser (React/Vite)
   ├─ getUserMedia() -> video chỉ tồn tại trong browser
   ├─ ONNX Runtime Web + Ultra-Light RFB-320 -> face boxes local
   ├─ FaceQualityService -> size/confidence/edge/blur gate
+  ├─ MobileFaceNet/ArcFace -> normalized 512D embedding
   ├─ POST /auth/token + x-api-key -> nhận JWT ngắn hạn
   └─ GET /health + Bearer JWT -> NestJS API
 ```
@@ -83,7 +84,7 @@ Các endpoint khác yêu cầu `Authorization: Bearer <token>`; thiếu/sai/hế
 - [x] Phase 1: webcam lifecycle, camera selector, resolution/FPS
 - [x] Phase 2: browser face detection
 - [x] Phase 3: face quality gate
-- [ ] Phase 4: face embedding
+- [x] Phase 4: face embedding
 - [ ] Phase 5: local enrollment
 - [ ] Phase 6: local recognition
 - [ ] Phase 7: NestJS recognition API
@@ -92,4 +93,6 @@ Các endpoint khác yêu cầu `Authorization: Bearer <token>`; thiếu/sai/hế
 - [ ] Phase 10: Redis cache
 - [ ] Phase 11: end-to-end demo
 
-Chi tiết kiểm thử nằm tại [`docs/phase-0-1.md`](docs/phase-0-1.md), [`docs/phase-2.md`](docs/phase-2.md) và [`docs/phase-3.md`](docs/phase-3.md).
+Chi tiết kiểm thử nằm trong thư mục [`docs/`](docs/), bao gồm [`docs/phase-4.md`](docs/phase-4.md).
+
+> `w600k_mbf.onnx` là pretrained model của InsightFace và chỉ dành cho nghiên cứu phi thương mại. Phải thay model hoặc có license phù hợp trước khi triển khai thương mại.

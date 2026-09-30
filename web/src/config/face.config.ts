@@ -15,3 +15,11 @@ export const FACE_QUALITY_CONFIG = {
   minimumBlurScore: 80,
   blurSampleMaxSize: 160,
 } as const;
+
+export const FACE_EMBEDDING_CONFIG = {
+  modelPath: '/w600k_mbf.onnx',
+  inputWidth: 112,
+  inputHeight: 112,
+  cropMarginRatio: 0.22,
+  dimensions: 512,
+} as const;
