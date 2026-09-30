@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "concurrently -n WEB,API -c cyan,magenta \"npm run dev -w web\" \"npm run start:dev -w api\"",
     "build": "npm run build -w api && npm run build -w web",
-    "test": "npm run test -w api",
+    "test": "npm run test -w api && npm run test -w web",
     "lint": "npm run lint -w api && npm run lint -w web"
   },
   "devDependencies": {

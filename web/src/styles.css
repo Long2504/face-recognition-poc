@@ -59,8 +59,11 @@ button:disabled { cursor: not-allowed; opacity: .32; }
 .quality-summary span { color: #71847d; font: 8px DM Mono, monospace; text-transform: uppercase; }
 .quality-summary strong { overflow: hidden; color: #dfe9e5; font: 500 9px DM Mono, monospace; text-overflow: ellipsis; white-space: nowrap; }
 .quality-summary strong.good { color: #b9ff4a; }
+.mode-tabs { flex: 0 0 30px; display: grid; grid-template-columns: 1fr 1fr; padding: 3px; border: 1px solid #2b443b; background: #07120f; }
+.mode-tabs button { padding: 0; background: transparent; color: #6f837b; font: 500 8px DM Mono, monospace; letter-spacing: .09em; text-transform: uppercase; }
+.mode-tabs button.active { background: #1a2c25; color: #b9ff4a; }
 
-.enrollment-panel { min-height: 0; flex: 1 1 auto; padding-top: 17px; display: flex; flex-direction: column; border-top: 1px solid #2b443b; }
+.enrollment-panel { min-height: 0; flex: 1 1 auto; display: flex; flex-direction: column; }
 .person-form { margin-top: 13px; display: grid; grid-template-columns: .8fr 1.2fr; gap: 7px; }
 .person-form label, .registry-summary label { min-width: 0; display: grid; gap: 5px; }
 .person-form span, .registry-summary span, .representative-card span { color: #71847d; font: 8px DM Mono, monospace; letter-spacing: .07em; text-transform: uppercase; }
@@ -84,13 +87,35 @@ button:disabled { cursor: not-allowed; opacity: .32; }
 .registry-summary select { height: 32px; font-size: 9px; }
 .enrollment-feedback { min-height: 18px; margin: auto 0 0; padding-top: 8px; color: #93a69e; font-size: 8px; }
 .enrollment-feedback.failed { color: #ff9b8b; }
+.recognition-panel { min-height: 0; flex: 1 1 auto; display: flex; flex-direction: column; }
+.result-badge { padding: 7px 9px; border: 1px solid #355047; color: #879a92; font: 500 8px DM Mono, monospace; letter-spacing: .09em; }
+.result-badge.ready, .result-badge.match { color: #b9ff4a; border-color: #587b49; }
+.result-badge.unknown, .result-badge.error { color: #ff9b8b; border-color: #70433d; }
+.recognition-config { margin-top: 13px; display: grid; grid-template-columns: 1fr 1fr .8fr; border: 1px solid #2b443b; }
+.recognition-config > label, .recognition-config > div { min-width: 0; display: grid; gap: 4px; padding: 8px; border-right: 1px solid #2b443b; }
+.recognition-config > :last-child { border-right: 0; }
+.recognition-config span { color: #71847d; font: 7px DM Mono, monospace; text-transform: uppercase; }
+.recognition-config input { min-width: 0; width: 100%; height: 24px; padding: 0; border: 0; outline: 0; background: transparent; color: #e7f0ec; font: 500 11px DM Mono, monospace; }
+.recognition-config strong { align-self: center; color: #dfe9e5; font: 500 9px DM Mono, monospace; }
+.recognize-button { width: 100%; height: 38px; margin-top: 9px; padding: 0 12px; background: #b9ff4a; color: #07100e; font-size: 10px; font-weight: 700; }
+.candidate-card { min-height: 92px; margin-top: 9px; padding: 12px; display: flex; flex-direction: column; justify-content: center; border: 1px solid #2b443b; background: #0c1b16; }
+.candidate-card.match { border-left: 3px solid #b9ff4a; }
+.candidate-card.unknown { border-left: 3px solid #ff806e; }
+.candidate-card span { color: #71847d; font: 7px DM Mono, monospace; text-transform: uppercase; }
+.candidate-card strong { margin-top: 5px; overflow: hidden; font-size: 21px; font-weight: 500; letter-spacing: -.03em; text-overflow: ellipsis; white-space: nowrap; }
+.candidate-card small { margin-top: 4px; overflow: hidden; color: #789087; font: 8px DM Mono, monospace; text-overflow: ellipsis; white-space: nowrap; }
+.recognition-scores { margin-top: 9px; display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid #2b443b; }
+.recognition-scores > div { min-width: 0; display: grid; gap: 5px; padding: 10px; border-right: 1px solid #2b443b; }
+.recognition-scores > div:last-child { border-right: 0; }
+.recognition-scores span { color: #71847d; font: 7px DM Mono, monospace; text-transform: uppercase; }
+.recognition-scores strong { font: 500 17px DM Mono, monospace; }
+.recognition-timing { margin-top: 8px; display: flex; justify-content: space-between; gap: 8px; color: #71847d; font: 7px DM Mono, monospace; }
 
 @media (max-height: 720px) {
   .shell { padding-right: 16px; padding-bottom: 16px; padding-left: 16px; }
   .topbar { height: 54px; }
   .dashboard { height: calc(100dvh - 70px); grid-template-columns: minmax(0, 1fr) 400px; }
   .command-panel { padding: 14px; gap: 12px; }
-  .enrollment-panel { padding-top: 12px; }
   .person-form { margin-top: 9px; }
   .sample-progress > div { height: 42px; }
   .quality-summary { margin-top: 9px; }

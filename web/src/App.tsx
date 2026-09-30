@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { EnrollmentPanel } from './components/EnrollmentPanel';
+import { RecognitionPanel } from './components/RecognitionPanel';
 import { useCamera } from './hooks/useCamera';
 import { useFaceDetection } from './hooks/useFaceDetection';
 import { type ApiStatus, checkApiHealth } from './services/api';
@@ -8,6 +9,7 @@ export function App() {
   const camera = useCamera();
   const detection = useFaceDetection(camera.videoRef, camera.isRunning);
   const [apiStatus, setApiStatus] = useState<ApiStatus>('checking');
+  const [mode, setMode] = useState<'recognize' | 'enroll'>('recognize');
 
   useEffect(() => {
     const controller = new AbortController();
@@ -19,7 +21,7 @@ export function App() {
     <main className="shell">
       <header className="topbar">
         <a className="brand" href="/" aria-label="Face Lab home"><span className="brand-mark">F</span><span>FACE LAB</span></a>
-        <div className="page-context"><strong>Recognition test</strong><span>Phase 05 · Local enrollment</span></div>
+        <div className="page-context"><strong>Recognition test</strong><span>Phase 06 · Local recognition</span></div>
         <div className={`api-pill ${apiStatus}`}><span /> API {apiStatus === 'ok' ? 'OK' : apiStatus === 'error' ? 'OFFLINE' : 'CHECKING'}</div>
       </header>
 
@@ -79,11 +81,15 @@ export function App() {
             </div>
           </section>
 
-          <EnrollmentPanel
-            videoRef={camera.videoRef}
-            face={detection.metrics.primaryFace}
-            quality={detection.metrics.quality}
-          />
+          <div className="mode-tabs" role="tablist" aria-label="Face workflow">
+            <button type="button" className={mode === 'recognize' ? 'active' : ''} onClick={() => setMode('recognize')}>Recognize</button>
+            <button type="button" className={mode === 'enroll' ? 'active' : ''} onClick={() => setMode('enroll')}>Enroll</button>
+          </div>
+          {mode === 'recognize' ? (
+            <RecognitionPanel videoRef={camera.videoRef} face={detection.metrics.primaryFace} quality={detection.metrics.quality} />
+          ) : (
+            <EnrollmentPanel videoRef={camera.videoRef} face={detection.metrics.primaryFace} quality={detection.metrics.quality} />
+          )}
         </aside>
       </section>
     </main>

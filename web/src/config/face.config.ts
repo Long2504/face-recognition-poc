@@ -23,3 +23,9 @@ export const FACE_EMBEDDING_CONFIG = {
   cropMarginRatio: 0.22,
   dimensions: 512,
 } as const;
+
+export const RECOGNITION_CONFIG = {
+  topK: 5,
+  minimumSimilarity: 0.45,
+  minimumMargin: 0.08,
+} as const;
