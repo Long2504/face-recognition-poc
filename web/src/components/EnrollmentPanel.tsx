@@ -56,14 +56,14 @@ export function EnrollmentPanel({ videoRef, face, quality }: Props) {
       </div>
 
       <button className="save-person" type="button" disabled={!canSave || enrollment.isSaving} onClick={() => void save()}>
-        {enrollment.isSaving ? 'Saving…' : 'Save person locally'}
+        {enrollment.isSaving ? 'Saving…' : 'Save person to API'}
       </button>
 
       <div className="registry-summary">
         <label><span>Registered people · {enrollment.people.length}</span>
           <select disabled={enrollment.people.length === 0} defaultValue="">
             <option value="">{enrollment.people.length ? 'Select to inspect' : 'No registered people'}</option>
-            {enrollment.people.map((person) => <option value={person.id} key={person.id}>{person.id} · {person.name} · {person.embeddings.length} samples</option>)}
+            {enrollment.people.map((person) => <option value={person.id} key={person.id}>{person.id} · {person.name} · {person.sampleCount} samples</option>)}
           </select>
         </label>
       </div>

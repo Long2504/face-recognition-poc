@@ -21,7 +21,7 @@ export function App() {
     <main className="shell">
       <header className="topbar">
         <a className="brand" href="/" aria-label="Face Lab home"><span className="brand-mark">F</span><span>FACE LAB</span></a>
-        <div className="page-context"><strong>Recognition test</strong><span>Phase 06 · Local recognition</span></div>
+        <div className="page-context"><strong>Recognition test</strong><span>Phase 07 · NestJS API</span></div>
         <div className={`api-pill ${apiStatus}`}><span /> API {apiStatus === 'ok' ? 'OK' : apiStatus === 'error' ? 'OFFLINE' : 'CHECKING'}</div>
       </header>
 

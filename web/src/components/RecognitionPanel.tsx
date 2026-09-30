@@ -51,7 +51,7 @@ export function RecognitionPanel({ videoRef, face, quality }: Props) {
 
       <div className="recognition-timing">
         <span>Embedding {recognition.embeddingMs ? `${recognition.embeddingMs.toFixed(1)} ms` : '—'}</span>
-        <span>Search {recognition.result ? `${recognition.result.searchMs.toFixed(2)} ms` : '—'}</span>
+        <span>Server search {recognition.result ? `${recognition.result.searchMs.toFixed(2)} ms` : '—'}</span>
         <span>Total {recognition.totalMs ? `${recognition.totalMs.toFixed(1)} ms` : '—'}</span>
       </div>
       {recognition.error && <p className="enrollment-feedback failed">{recognition.error}</p>}

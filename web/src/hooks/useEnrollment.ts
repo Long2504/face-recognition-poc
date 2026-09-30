@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useState, type RefObject } from 'react';
 import type { FaceBox } from '../services/face-detector';
 import { faceEmbedder } from '../services/face-embedder';
-import { personRepository, type StoredPerson } from '../services/person.repository';
-import { createRepresentativeEmbedding } from '../services/representative-embedding';
+import { enrollPerson, listPeople, type ApiPerson } from '../services/recognition-api';
 
 const REQUIRED_SAMPLES = 5;
 type ModelStatus = 'loading' | 'ready' | 'error';
@@ -10,7 +9,7 @@ type ModelStatus = 'loading' | 'ready' | 'error';
 export function useEnrollment(videoRef: RefObject<HTMLVideoElement | null>) {
   const [modelStatus, setModelStatus] = useState<ModelStatus>(faceEmbedder.isLoaded() ? 'ready' : 'loading');
   const [samples, setSamples] = useState<Float32Array[]>([]);
-  const [people, setPeople] = useState<StoredPerson[]>([]);
+  const [people, setPeople] = useState<ApiPerson[]>([]);
   const [isCapturing, setIsCapturing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [inferenceMs, setInferenceMs] = useState(0);
@@ -19,7 +18,7 @@ export function useEnrollment(videoRef: RefObject<HTMLVideoElement | null>) {
 
   const refreshPeople = useCallback(async () => {
     try {
-      setPeople(await personRepository.list());
+      setPeople(await listPeople());
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'Could not read enrolled people.');
     }
@@ -27,7 +26,7 @@ export function useEnrollment(videoRef: RefObject<HTMLVideoElement | null>) {
 
   useEffect(() => {
     let cancelled = false;
-    void Promise.all([faceEmbedder.load(), personRepository.list()]).then(([, storedPeople]) => {
+    void Promise.all([faceEmbedder.load(), listPeople()]).then(([, storedPeople]) => {
       if (!cancelled) {
         setModelStatus('ready');
         setPeople(storedPeople);
@@ -66,17 +65,11 @@ export function useEnrollment(videoRef: RefObject<HTMLVideoElement | null>) {
     setError('');
     setMessage('');
     try {
-      await personRepository.add({
-        id: cleanId,
-        name: cleanName,
-        embeddings: samples,
-        representativeEmbedding: createRepresentativeEmbedding(samples),
-        createdAt: new Date().toISOString(),
-      });
+      await enrollPerson(cleanId, cleanName, samples);
       await refreshPeople();
       setSamples([]);
       setInferenceMs(0);
-      setMessage(`${cleanName} enrolled with ${REQUIRED_SAMPLES} samples.`);
+      setMessage(`${cleanName} enrolled on API with ${REQUIRED_SAMPLES} samples.`);
       return true;
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'Could not save person.');

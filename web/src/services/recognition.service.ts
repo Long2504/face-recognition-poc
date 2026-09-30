@@ -23,6 +23,7 @@ export type RecognitionResult = {
   top2Score: number | null;
   scoreDifference: number | null;
   searchMs: number;
+  searchSource?: 'MEMORY';
 };
 
 export interface RecognitionService {

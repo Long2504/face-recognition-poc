@@ -2,9 +2,8 @@ import { useCallback, useEffect, useState, type RefObject } from 'react';
 import { RECOGNITION_CONFIG } from '../config/face.config';
 import type { FaceBox } from '../services/face-detector';
 import { faceEmbedder } from '../services/face-embedder';
-import { personRepository, type StoredPerson } from '../services/person.repository';
+import { listPeople, searchRecognition, type ApiPerson } from '../services/recognition-api';
 import {
-  recognitionService,
   type RecognitionResult,
   type RecognitionThresholds,
 } from '../services/recognition.service';
@@ -13,7 +12,7 @@ type ModelStatus = 'loading' | 'ready' | 'error';
 
 export function useRecognition(videoRef: RefObject<HTMLVideoElement | null>) {
   const [modelStatus, setModelStatus] = useState<ModelStatus>(faceEmbedder.isLoaded() ? 'ready' : 'loading');
-  const [people, setPeople] = useState<StoredPerson[]>([]);
+  const [people, setPeople] = useState<ApiPerson[]>([]);
   const [thresholds, setThresholds] = useState<RecognitionThresholds>({ ...RECOGNITION_CONFIG });
   const [result, setResult] = useState<RecognitionResult | null>(null);
   const [embeddingMs, setEmbeddingMs] = useState(0);
@@ -23,7 +22,7 @@ export function useRecognition(videoRef: RefObject<HTMLVideoElement | null>) {
 
   useEffect(() => {
     let cancelled = false;
-    void Promise.all([faceEmbedder.load(), personRepository.list()]).then(([, storedPeople]) => {
+    void Promise.all([faceEmbedder.load(), listPeople()]).then(([, storedPeople]) => {
       if (!cancelled) {
         setModelStatus('ready');
         setPeople(storedPeople);
@@ -45,7 +44,7 @@ export function useRecognition(videoRef: RefObject<HTMLVideoElement | null>) {
     const startedAt = performance.now();
     try {
       const embedding = await faceEmbedder.embed(video, face);
-      const searchResult = recognitionService.search(embedding.embedding, people, thresholds);
+      const searchResult = await searchRecognition(embedding.embedding, thresholds);
       setEmbeddingMs(embedding.inferenceMs);
       setResult(searchResult);
       setTotalMs(performance.now() - startedAt);
