@@ -1,19 +1,19 @@
-import { useState, type RefObject } from 'react';
+import { useState } from 'react';
 import { useEnrollment } from '../hooks/useEnrollment';
-import type { FaceBox } from '../services/face-detector';
+import type { FaceFrameSnapshot } from '../hooks/useFaceDetection';
 import type { FaceQualityResult } from '../services/face-quality.service';
 
 type Props = {
-  videoRef: RefObject<HTMLVideoElement | null>;
-  face: FaceBox | null;
+  primaryTrackId: number | null;
+  captureTrackFrame: (trackId: number) => FaceFrameSnapshot | null;
   quality: FaceQualityResult | null;
 };
 
-export function EnrollmentPanel({ videoRef, face, quality }: Props) {
-  const enrollment = useEnrollment(videoRef);
+export function EnrollmentPanel({ primaryTrackId, captureTrackFrame, quality }: Props) {
+  const enrollment = useEnrollment(captureTrackFrame);
   const [personId, setPersonId] = useState('');
   const [name, setName] = useState('');
-  const canCapture = enrollment.modelStatus === 'ready' && quality?.status === 'GOOD' && face !== null && enrollment.samples.length < enrollment.requiredSamples;
+  const canCapture = enrollment.modelStatus === 'ready' && quality?.status === 'GOOD' && primaryTrackId !== null && enrollment.samples.length < enrollment.requiredSamples;
   const canSave = personId.trim() !== '' && name.trim() !== '' && enrollment.samples.length === enrollment.requiredSamples;
 
   const save = async () => {
@@ -44,7 +44,7 @@ export function EnrollmentPanel({ videoRef, face, quality }: Props) {
       </div>
 
       <div className="enrollment-actions">
-        <button className="capture-sample" type="button" onClick={() => void enrollment.capture(face)} disabled={!canCapture || enrollment.isCapturing}>
+        <button className="capture-sample" type="button" onClick={() => void enrollment.capture(primaryTrackId)} disabled={!canCapture || enrollment.isCapturing}>
           {enrollment.isCapturing ? 'Capturing…' : enrollment.samples.length >= enrollment.requiredSamples ? '5 samples ready' : `Capture sample ${enrollment.samples.length + 1}`}
         </button>
         <button className="secondary" type="button" onClick={enrollment.resetSamples} disabled={enrollment.samples.length === 0}>Reset</button>

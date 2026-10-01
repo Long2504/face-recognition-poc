@@ -1,12 +1,12 @@
-import { useCallback, useEffect, useState, type RefObject } from 'react';
-import type { FaceBox } from '../services/face-detector';
+import { useCallback, useEffect, useState } from 'react';
+import type { FaceFrameSnapshot } from './useFaceDetection';
 import { faceEmbedder } from '../services/face-embedder';
 import { enrollPerson, listPeople, type ApiPerson } from '../services/recognition-api';
 
 const REQUIRED_SAMPLES = 5;
 type ModelStatus = 'loading' | 'ready' | 'error';
 
-export function useEnrollment(videoRef: RefObject<HTMLVideoElement | null>) {
+export function useEnrollment(captureTrackFrame: (trackId: number) => FaceFrameSnapshot | null) {
   const [modelStatus, setModelStatus] = useState<ModelStatus>(faceEmbedder.isLoaded() ? 'ready' : 'loading');
   const [samples, setSamples] = useState<Float32Array[]>([]);
   const [people, setPeople] = useState<ApiPerson[]>([]);
@@ -40,14 +40,15 @@ export function useEnrollment(videoRef: RefObject<HTMLVideoElement | null>) {
     return () => { cancelled = true; };
   }, []);
 
-  const capture = useCallback(async (face: FaceBox | null) => {
-    const video = videoRef.current;
-    if (!video || !face || modelStatus !== 'ready' || samples.length >= REQUIRED_SAMPLES) return;
+  const capture = useCallback(async (trackId: number | null) => {
+    if (trackId === null || modelStatus !== 'ready' || samples.length >= REQUIRED_SAMPLES) return;
+    const frame = captureTrackFrame(trackId);
+    if (!frame) return;
     setIsCapturing(true);
     setError('');
     setMessage('');
     try {
-      const result = await faceEmbedder.embed(video, face);
+      const result = await faceEmbedder.embed(frame.source, frame.face);
       setSamples((current) => [...current, result.embedding]);
       setInferenceMs(result.inferenceMs);
     } catch (reason) {
@@ -55,7 +56,7 @@ export function useEnrollment(videoRef: RefObject<HTMLVideoElement | null>) {
     } finally {
       setIsCapturing(false);
     }
-  }, [modelStatus, samples.length, videoRef]);
+  }, [captureTrackFrame, modelStatus, samples.length]);
 
   const save = useCallback(async (id: string, name: string) => {
     const cleanId = id.trim();

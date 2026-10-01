@@ -8,6 +8,10 @@
 - `POST /recognition/search` performs representative Top K shortlist, sample rerank, and returns `MATCH` or `UNKNOWN`.
 - Every endpoint above requires a Bearer token. `POST /auth/token` remains protected by `x-api-key`.
 - The browser sends embeddings only. It never uploads the camera stream or face images.
+- Automatic recognition is bound to a lightweight IoU `trackId`; late responses are discarded using `trackId + request sequence`.
+- Detection, quality, and embedding use a consistent completed-frame snapshot.
+- Recognition pauses with `MULTIPLE_FACES` when the two largest faces have similar area.
+- Identity labels expire after five seconds and are removed immediately when their track disappears.
 
 ## How To Run
 

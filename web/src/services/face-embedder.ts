@@ -2,6 +2,7 @@ import * as ort from 'onnxruntime-web/wasm';
 import { FACE_EMBEDDING_CONFIG as config } from '../config/face.config';
 import type { FaceBox } from './face-detector';
 import { normalizeEmbedding } from './embedding-math';
+import { getFrameDimensions, type FrameSource } from './frame-source';
 
 export type FaceEmbeddingResult = {
   embedding: Float32Array;
@@ -10,7 +11,7 @@ export type FaceEmbeddingResult = {
 
 export interface FaceEmbedder {
   load(): Promise<void>;
-  embed(video: HTMLVideoElement, face: FaceBox): Promise<FaceEmbeddingResult>;
+  embed(source: FrameSource, face: FaceBox): Promise<FaceEmbeddingResult>;
   isLoaded(): boolean;
 }
 
@@ -51,11 +52,11 @@ class ArcFaceMobileFaceNetEmbedder implements FaceEmbedder {
     await this.loading;
   }
 
-  async embed(video: HTMLVideoElement, face: FaceBox): Promise<FaceEmbeddingResult> {
+  async embed(source: FrameSource, face: FaceBox): Promise<FaceEmbeddingResult> {
     await this.load();
     if (!this.session) throw new Error('Face embedding model is not loaded.');
 
-    this.drawFaceCrop(video, face);
+    this.drawFaceCrop(source, face);
     const rgba = this.context.getImageData(0, 0, config.inputWidth, config.inputHeight).data;
     const planeSize = config.inputWidth * config.inputHeight;
     const input = new Float32Array(planeSize * 3);
@@ -78,17 +79,18 @@ class ArcFaceMobileFaceNetEmbedder implements FaceEmbedder {
     return { embedding: normalizeEmbedding(rawEmbedding), inferenceMs };
   }
 
-  private drawFaceCrop(video: HTMLVideoElement, face: FaceBox): void {
-    const boxWidth = (face.x2 - face.x1) * video.videoWidth;
-    const boxHeight = (face.y2 - face.y1) * video.videoHeight;
-    const centerX = ((face.x1 + face.x2) / 2) * video.videoWidth;
-    const centerY = ((face.y1 + face.y2) / 2) * video.videoHeight;
+  private drawFaceCrop(source: FrameSource, face: FaceBox): void {
+    const dimensions = getFrameDimensions(source);
+    const boxWidth = (face.x2 - face.x1) * dimensions.width;
+    const boxHeight = (face.y2 - face.y1) * dimensions.height;
+    const centerX = ((face.x1 + face.x2) / 2) * dimensions.width;
+    const centerY = ((face.y1 + face.y2) / 2) * dimensions.height;
     const desiredSize = Math.max(boxWidth, boxHeight) * (1 + config.cropMarginRatio * 2);
-    const cropSize = Math.min(desiredSize, video.videoWidth, video.videoHeight);
-    const sourceX = Math.max(0, Math.min(video.videoWidth - cropSize, centerX - cropSize / 2));
-    const sourceY = Math.max(0, Math.min(video.videoHeight - cropSize, centerY - cropSize / 2));
+    const cropSize = Math.min(desiredSize, dimensions.width, dimensions.height);
+    const sourceX = Math.max(0, Math.min(dimensions.width - cropSize, centerX - cropSize / 2));
+    const sourceY = Math.max(0, Math.min(dimensions.height - cropSize, centerY - cropSize / 2));
     this.context.drawImage(
-      video,
+      source,
       sourceX,
       sourceY,
       cropSize,

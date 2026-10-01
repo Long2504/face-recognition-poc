@@ -6,6 +6,10 @@ export const FACE_DETECTION_CONFIG = {
   iouThreshold: 0.3,
   maxDetections: 20,
   targetIntervalMs: 160,
+  trackingIouThreshold: 0.3,
+  trackingMaximumMissedFrames: 2,
+  ambiguousFaceAreaRatio: 0.6,
+  identityTtlMs: 5000,
 } as const;
 
 export const FACE_QUALITY_CONFIG = {

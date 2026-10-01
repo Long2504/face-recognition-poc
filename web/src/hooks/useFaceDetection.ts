@@ -1,6 +1,7 @@
-import { type RefObject, useEffect, useRef, useState } from 'react';
+import { type RefObject, useCallback, useEffect, useRef, useState } from 'react';
 import { FACE_DETECTION_CONFIG as config } from '../config/face.config';
 import { type FaceBox, faceDetector } from '../services/face-detector';
+import { boxArea, FaceTracker, type TrackedFace } from '../services/face-tracker';
 import {
   type FaceQualityResult,
   faceQualityService,
@@ -14,6 +15,8 @@ export type DetectionMetrics = {
   detectionFps: number;
   quality: FaceQualityResult | null;
   primaryFace: FaceBox | null;
+  primaryTrackId: number | null;
+  multipleFaces: boolean;
   error: string;
 };
 
@@ -24,12 +27,21 @@ const INITIAL_METRICS: DetectionMetrics = {
   detectionFps: 0,
   quality: null,
   primaryFace: null,
+  primaryTrackId: null,
+  multipleFaces: false,
   error: '',
 };
 
-type EvaluatedFace = { face: FaceBox; quality: FaceQualityResult };
+type EvaluatedFace = TrackedFace & { quality: FaceQualityResult };
+export type RecognitionOverlay = { text: string; status: 'searching' | 'match' | 'unknown'; expiresAt: number };
+export type FaceFrameSnapshot = { trackId: number; source: HTMLCanvasElement; face: FaceBox };
 
-function drawFaces(canvas: HTMLCanvasElement, video: HTMLVideoElement, faces: EvaluatedFace[]): void {
+function drawFaces(
+  canvas: HTMLCanvasElement,
+  video: HTMLVideoElement,
+  faces: EvaluatedFace[],
+  recognition: Map<number, RecognitionOverlay>,
+): void {
   const cssWidth = canvas.clientWidth;
   const cssHeight = canvas.clientHeight;
   const pixelRatio = window.devicePixelRatio || 1;
@@ -53,14 +65,23 @@ function drawFaces(canvas: HTMLCanvasElement, video: HTMLVideoElement, faces: Ev
 
   context.lineWidth = 2;
   context.font = '500 11px "DM Mono", monospace';
-  for (const { face, quality } of faces) {
+  const now = Date.now();
+  for (const { trackId, face, quality } of faces) {
     const left = offsetX + (1 - face.x2) * renderedWidth;
     const top = offsetY + face.y1 * renderedHeight;
     const width = (face.x2 - face.x1) * renderedWidth;
     const height = (face.y2 - face.y1) * renderedHeight;
-    const label = `${quality.status} ${(face.confidence * 100).toFixed(1)}%`;
+    const storedRecognition = recognition.get(trackId) ?? null;
+    const recognitionForFace = storedRecognition && storedRecognition.expiresAt > now ? storedRecognition : null;
+    const label = recognitionForFace?.text ?? `${quality.status} ${(face.confidence * 100).toFixed(1)}%`;
     const labelWidth = context.measureText(label).width + 14;
-    const color = quality.status === 'GOOD' ? '#b9ff4a' : quality.status === 'BLUR' ? '#ffc857' : '#ff806e';
+    const color = recognitionForFace?.status === 'match'
+      ? '#b9ff4a'
+      : recognitionForFace?.status === 'unknown'
+        ? '#ff806e'
+        : recognitionForFace?.status === 'searching'
+          ? '#ffc857'
+          : quality.status === 'GOOD' ? '#b9ff4a' : quality.status === 'BLUR' ? '#ffc857' : '#ff806e';
 
     context.strokeStyle = color;
     context.strokeRect(left, top, width, height);
@@ -73,7 +94,32 @@ function drawFaces(canvas: HTMLCanvasElement, video: HTMLVideoElement, faces: Ev
 
 export function useFaceDetection(videoRef: RefObject<HTMLVideoElement | null>, isRunning: boolean) {
   const overlayRef = useRef<HTMLCanvasElement>(null);
+  const frameCanvasRef = useRef<HTMLCanvasElement>(document.createElement('canvas'));
+  const workingFrameCanvasRef = useRef<HTMLCanvasElement>(document.createElement('canvas'));
+  const latestFacesRef = useRef<EvaluatedFace[]>([]);
+  const recognitionOverlaysRef = useRef(new Map<number, RecognitionOverlay>());
+  const trackerRef = useRef(new FaceTracker(config.trackingIouThreshold, config.trackingMaximumMissedFrames));
   const [metrics, setMetrics] = useState<DetectionMetrics>(INITIAL_METRICS);
+
+  const setRecognitionOverlay = useCallback((trackId: number, value: Omit<RecognitionOverlay, 'expiresAt'> | null) => {
+    if (value) recognitionOverlaysRef.current.set(trackId, { ...value, expiresAt: Date.now() + config.identityTtlMs });
+    else recognitionOverlaysRef.current.delete(trackId);
+  }, []);
+
+  const isTrackActive = useCallback((trackId: number): boolean => {
+    return latestFacesRef.current.some((item) => item.trackId === trackId);
+  }, []);
+
+  const captureTrackFrame = useCallback((trackId: number): FaceFrameSnapshot | null => {
+    const tracked = latestFacesRef.current.find((item) => item.trackId === trackId);
+    const frame = frameCanvasRef.current;
+    if (!tracked || frame.width === 0 || frame.height === 0) return null;
+    const snapshot = document.createElement('canvas');
+    snapshot.width = frame.width;
+    snapshot.height = frame.height;
+    snapshot.getContext('2d')?.drawImage(frame, 0, 0);
+    return { trackId, source: snapshot, face: { ...tracked.face } };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -81,6 +127,8 @@ export function useFaceDetection(videoRef: RefObject<HTMLVideoElement | null>, i
     let completedFrames = 0;
     let fpsWindowStartedAt = performance.now();
     let displayedFps = 0;
+    const tracker = trackerRef.current;
+    const recognitionOverlays = recognitionOverlaysRef.current;
 
     const clearOverlay = () => {
       const canvas = overlayRef.current;
@@ -88,6 +136,9 @@ export function useFaceDetection(videoRef: RefObject<HTMLVideoElement | null>, i
     };
 
     if (!isRunning) {
+      tracker.reset();
+      latestFacesRef.current = [];
+      recognitionOverlays.clear();
       clearOverlay();
       setMetrics({ ...INITIAL_METRICS, status: faceDetector.isLoaded() ? 'ready' : 'idle' });
       return undefined;
@@ -103,19 +154,32 @@ export function useFaceDetection(videoRef: RefObject<HTMLVideoElement | null>, i
 
       const cycleStartedAt = performance.now();
       try {
-        const result = await faceDetector.detect(video);
+        const frame = workingFrameCanvasRef.current;
+        if (frame.width !== video.videoWidth || frame.height !== video.videoHeight) {
+          frame.width = video.videoWidth;
+          frame.height = video.videoHeight;
+        }
+        frame.getContext('2d')?.drawImage(video, 0, 0, frame.width, frame.height);
+        const result = await faceDetector.detect(frame);
         if (cancelled) return;
-        const evaluatedFaces = result.faces.map((face) => ({
-          face,
-          quality: faceQualityService.evaluate(video, face),
+        const evaluatedFaces = tracker.update(result.faces).map((tracked) => ({
+          ...tracked,
+          quality: faceQualityService.evaluate(frame, tracked.face),
         }));
-        const primaryFace = evaluatedFaces.reduce<EvaluatedFace | null>((current, candidate) => {
-          if (!current) return candidate;
-          const currentArea = (current.face.x2 - current.face.x1) * (current.face.y2 - current.face.y1);
-          const candidateArea = (candidate.face.x2 - candidate.face.x1) * (candidate.face.y2 - candidate.face.y1);
-          return candidateArea > currentArea ? candidate : current;
-        }, null);
-        drawFaces(canvas, video, evaluatedFaces);
+        const previousCompletedFrame = frameCanvasRef.current;
+        frameCanvasRef.current = frame;
+        workingFrameCanvasRef.current = previousCompletedFrame;
+        latestFacesRef.current = evaluatedFaces;
+        const visibleTrackIds = new Set(evaluatedFaces.map((item) => item.trackId));
+        for (const trackId of recognitionOverlays.keys()) {
+          if (!visibleTrackIds.has(trackId)) recognitionOverlays.delete(trackId);
+        }
+        const rankedFaces = [...evaluatedFaces].sort((a, b) => boxArea(b.face) - boxArea(a.face));
+        const largestArea = rankedFaces[0] ? boxArea(rankedFaces[0].face) : 0;
+        const secondArea = rankedFaces[1] ? boxArea(rankedFaces[1].face) : 0;
+        const multipleFaces = largestArea > 0 && secondArea / largestArea > config.ambiguousFaceAreaRatio;
+        const primaryFace = multipleFaces ? null : rankedFaces[0] ?? null;
+        drawFaces(canvas, video, evaluatedFaces, recognitionOverlays);
         completedFrames += 1;
         const now = performance.now();
         const elapsed = now - fpsWindowStartedAt;
@@ -131,6 +195,8 @@ export function useFaceDetection(videoRef: RefObject<HTMLVideoElement | null>, i
           detectionFps: displayedFps,
           quality: primaryFace?.quality ?? null,
           primaryFace: primaryFace?.face ?? null,
+          primaryTrackId: primaryFace?.trackId ?? null,
+          multipleFaces,
           error: '',
         });
       } catch (reason) {
@@ -165,8 +231,11 @@ export function useFaceDetection(videoRef: RefObject<HTMLVideoElement | null>, i
       cancelled = true;
       if (timer !== undefined) window.clearTimeout(timer);
       clearOverlay();
+      latestFacesRef.current = [];
+      recognitionOverlays.clear();
+      tracker.reset();
     };
   }, [isRunning, videoRef]);
 
-  return { overlayRef, metrics };
+  return { overlayRef, metrics, setRecognitionOverlay, captureTrackFrame, isTrackActive };
 }

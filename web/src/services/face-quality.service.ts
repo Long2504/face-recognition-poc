@@ -1,5 +1,6 @@
 import { FACE_QUALITY_CONFIG as config } from '../config/face.config';
 import type { FaceBox } from './face-detector';
+import { getFrameDimensions, type FrameSource } from './frame-source';
 
 export type FaceQualityStatus =
   | 'GOOD'
@@ -16,7 +17,7 @@ export type FaceQualityResult = {
 };
 
 export interface FaceQualityService {
-  evaluate(video: HTMLVideoElement, face: FaceBox): FaceQualityResult;
+  evaluate(source: FrameSource, face: FaceBox): FaceQualityResult;
 }
 
 class BrowserFaceQualityService implements FaceQualityService {
@@ -29,10 +30,11 @@ class BrowserFaceQualityService implements FaceQualityService {
     this.context = context;
   }
 
-  evaluate(video: HTMLVideoElement, face: FaceBox): FaceQualityResult {
-    const faceWidthPx = Math.max(0, (face.x2 - face.x1) * video.videoWidth);
-    const faceHeightPx = Math.max(0, (face.y2 - face.y1) * video.videoHeight);
-    const blurScore = this.calculateBlurScore(video, face, faceWidthPx, faceHeightPx);
+  evaluate(source: FrameSource, face: FaceBox): FaceQualityResult {
+    const dimensions = getFrameDimensions(source);
+    const faceWidthPx = Math.max(0, (face.x2 - face.x1) * dimensions.width);
+    const faceHeightPx = Math.max(0, (face.y2 - face.y1) * dimensions.height);
+    const blurScore = this.calculateBlurScore(source, face, faceWidthPx, faceHeightPx);
 
     let status: FaceQualityStatus = 'GOOD';
     if (face.confidence < config.minimumConfidence) {
@@ -59,7 +61,7 @@ class BrowserFaceQualityService implements FaceQualityService {
   }
 
   private calculateBlurScore(
-    video: HTMLVideoElement,
+    source: FrameSource,
     face: FaceBox,
     sourceWidth: number,
     sourceHeight: number,
@@ -71,9 +73,9 @@ class BrowserFaceQualityService implements FaceQualityService {
     this.canvas.width = width;
     this.canvas.height = height;
     this.context.drawImage(
-      video,
-      face.x1 * video.videoWidth,
-      face.y1 * video.videoHeight,
+      source,
+      face.x1 * getFrameDimensions(source).width,
+      face.y1 * getFrameDimensions(source).height,
       sourceWidth,
       sourceHeight,
       0,

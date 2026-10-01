@@ -1,5 +1,6 @@
 import * as ort from 'onnxruntime-web/wasm';
 import { FACE_DETECTION_CONFIG as config } from '../config/face.config';
+import type { FrameSource } from './frame-source';
 
 export type FaceBox = {
   x1: number;
@@ -16,7 +17,7 @@ export type FaceDetectionResult = {
 
 export interface FaceDetector {
   load(): Promise<void>;
-  detect(video: HTMLVideoElement): Promise<FaceDetectionResult>;
+  detect(source: FrameSource): Promise<FaceDetectionResult>;
   isLoaded(): boolean;
 }
 
@@ -80,11 +81,11 @@ class UltraLightFaceDetector implements FaceDetector {
     await this.loading;
   }
 
-  async detect(video: HTMLVideoElement): Promise<FaceDetectionResult> {
+  async detect(source: FrameSource): Promise<FaceDetectionResult> {
     await this.load();
     if (!this.session) throw new Error('Face detector is not loaded.');
 
-    this.inputContext.drawImage(video, 0, 0, config.inputWidth, config.inputHeight);
+    this.inputContext.drawImage(source, 0, 0, config.inputWidth, config.inputHeight);
     const pixels = this.inputContext.getImageData(0, 0, config.inputWidth, config.inputHeight).data;
     const planeSize = config.inputWidth * config.inputHeight;
     const input = new Float32Array(planeSize * 3);
@@ -111,13 +112,14 @@ class UltraLightFaceDetector implements FaceDetector {
       const confidence = scores[index * 2 + 1];
       if (confidence < config.confidenceThreshold) continue;
       const offset = index * 4;
-      candidates.push({
+      const face = {
         x1: Math.max(0, Math.min(1, boxes[offset])),
         y1: Math.max(0, Math.min(1, boxes[offset + 1])),
         x2: Math.max(0, Math.min(1, boxes[offset + 2])),
         y2: Math.max(0, Math.min(1, boxes[offset + 3])),
         confidence,
-      });
+      };
+      if (face.x2 > face.x1 && face.y2 > face.y1) candidates.push(face);
     }
 
     return {

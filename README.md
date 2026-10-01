@@ -9,6 +9,7 @@ Browser (React/Vite)
   ├─ getUserMedia() -> video chỉ tồn tại trong browser
   ├─ ONNX Runtime Web + Ultra-Light RFB-320 -> face boxes local
   ├─ FaceQualityService -> size/confidence/edge/blur gate
+  ├─ IoU face tracking -> stable trackId + stale-response protection
   ├─ MobileFaceNet/ArcFace -> normalized 512D embedding
   ├─ NestJS API -> Person + 5 embeddings + representative embedding trong memory
   ├─ POST /recognition/search -> Top K + sample rerank -> MATCH / UNKNOWN

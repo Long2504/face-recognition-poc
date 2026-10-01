@@ -74,7 +74,7 @@ export function App() {
             {detection.metrics.error && <p className="error" role="alert">Model: {detection.metrics.error}</p>}
 
             <div className="quality-summary">
-              <div className="quality-state"><span>Quality</span><strong className={detection.metrics.quality?.status === 'GOOD' ? 'good' : ''}>{detection.metrics.quality?.status ?? 'NO_FACE'}</strong></div>
+              <div className="quality-state"><span>Quality</span><strong className={detection.metrics.quality?.status === 'GOOD' ? 'good' : ''}>{detection.metrics.multipleFaces ? 'MULTIPLE_FACES' : detection.metrics.quality?.status ?? 'NO_FACE'}</strong></div>
               <div><span>Face size</span><strong>{detection.metrics.quality ? `${detection.metrics.quality.faceWidthPx} × ${detection.metrics.quality.faceHeightPx}` : '—'}</strong></div>
               <div><span>Blur</span><strong>{detection.metrics.quality ? detection.metrics.quality.blurScore.toFixed(1) : '—'}</strong></div>
               <div><span>Video</span><strong>{camera.metrics.fps ? `${camera.metrics.fps} FPS` : '—'}</strong></div>
@@ -86,9 +86,9 @@ export function App() {
             <button type="button" className={mode === 'enroll' ? 'active' : ''} onClick={() => setMode('enroll')}>Enroll</button>
           </div>
           {mode === 'recognize' ? (
-            <RecognitionPanel videoRef={camera.videoRef} face={detection.metrics.primaryFace} quality={detection.metrics.quality} />
+            <RecognitionPanel primaryTrackId={detection.metrics.primaryTrackId} multipleFaces={detection.metrics.multipleFaces} captureTrackFrame={detection.captureTrackFrame} isTrackActive={detection.isTrackActive} quality={detection.metrics.quality} onOverlayChange={detection.setRecognitionOverlay} />
           ) : (
-            <EnrollmentPanel videoRef={camera.videoRef} face={detection.metrics.primaryFace} quality={detection.metrics.quality} />
+            <EnrollmentPanel primaryTrackId={detection.metrics.primaryTrackId} captureTrackFrame={detection.captureTrackFrame} quality={detection.metrics.quality} />
           )}
         </aside>
       </section>
